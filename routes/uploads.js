@@ -2,6 +2,10 @@ const express = require('express');
 const router = require('express').Router();
 var path = require('path');
 
+const multer = require('multer');
+const passport = require('passport');
+const passportConfig = require('../passport');
+
 let Upload = require("../models/upload.model");
 
 router.route("/").get((req, res) => {
@@ -10,7 +14,6 @@ router.route("/").get((req, res) => {
         .catch(err => res.status(400).json("Error: " + err));
 });
 
-const multer = require('multer');
 
 var storage = multer.diskStorage({
     destination: function(req, file, cb) {
@@ -24,24 +27,33 @@ var storage = multer.diskStorage({
 const uploader = multer({ storage: storage });
 
 
-router.post('/add', uploader.single('file'), (req, res) => {
+router.route('/add').post(passport.authenticate('jwt', { session: false } ), uploader.single('file'), (req, res) => {
     const upload = req.body.username;
+
+
+    console.log(req.body.tags.split(','));
 
     const newUpload = new Upload({
         name: req.file.originalname,
         uri: req.file.path,
-        author: "yes",
+        tags: req.body.tags.split(','),
         reviewedUsers: []
     });
-
     
-    newUpload.save()
-        .then(() => res.json('Upload added!'))
-        .catch(err => res.status(400).json('Error: ' + err));
+    newUpload.save(err => {
+      if(err) res.status(400).json('Error: ' + err);
+      else {
+        req.user.uploads.push(newUpload);
+        req.user.save(err => {
+          if(err) res.status(400).json('Error: ' + err);
+          else res.status(201).json('Upload added!');
+        });
+      }
+    });
 
 });
 
-router.get('/:flname', (req, res) => {
+router.get('/:flname', passport.authenticate('jwt', {session: false} ), (req, res) => {
 
     const filename = req.params.flname;
     res.download(`./storage/${filename}`);

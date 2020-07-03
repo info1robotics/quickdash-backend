@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { groupSchema } = require('./group.model');
+const bcrypt = require('bcrypt');
 
 const Schema = mongoose.Schema;
 
@@ -9,25 +9,49 @@ const userSchema = new Schema({
         required: true,
         unique: true,
         trim: true,
-        minlength: 1
+        minlength: 1,
+        maxlength: 18,
+    },
+    password: {
+        type: String,
+        required: true
     },
     role: {
         type: String,
+        enum: ['user', 'admin'],
         required: true,
-        unique: false,
-        trim: true,
-        minlength: 1
     },
     groups: {
-        type: [groupSchema],
+        type: [String],
+        enum: ['programming', '3d', 'building', 'pr', 'notebook', 'mentor'],
         required: true,
         unique: false
-    }
+    },
+    uploads: [{type: mongoose.Schema.Types.ObjectId, ref: 'Upload', unique: false}]
 }, {
     timestamps: true
 });
 
-const User = mongoose.model('User', userSchema);
+userSchema.pre('save', function(next) {
+    if(!this.isModified('password'))
+        return next();
 
-exports.userSchema = userSchema;
-exports.User = User;
+    bcrypt.hash(this.password, 10, (err, passwordHash) => {
+        if(err)
+            return next(err);
+        this.password = passwordHash;
+        next();
+    })
+});
+
+userSchema.methods.comparePassword = function(password, cb) {
+    bcrypt.compare(password, this.password, (err, isMatch) => {
+        if(err) return cb(err);
+        else if(!isMatch) return cb(null, isMatch);
+
+        return cb(null, this);
+    })
+}
+
+
+exports.User = mongoose.model('User', userSchema);

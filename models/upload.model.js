@@ -17,15 +17,12 @@ const uploadSchema = new Schema({
         trim: true,
         minlength: 1
     },
-    author: {
-        type: String,
-        required: true,
-        unique: false,
-        trim: true,
-        minlength: 1
+    tags: {
+        type: [String],
+        required: true
     },
     reviewedUsers: {
-        type: [userSchema],
+        type: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
         required: false,
         unique: false
     }
@@ -33,6 +30,4 @@ const uploadSchema = new Schema({
     timestamps: true
 });
 
-const Upload = mongoose.model('Upload', uploadSchema);
-
-module.exports = Upload;
+module.exports =  mongoose.model('Upload', uploadSchema);
