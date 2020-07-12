@@ -20,15 +20,18 @@ router.route('/register').post((req, res) => {
     const password = req.body.password;
     const role = req.body.role;
     const groups = req.body.groups;
+    const secret = req.body.secret;
 
-    User.findOne({username}, (err, user) => {
-        if(err) res.status(500).json('Error: ' + err);
-        else if(user) res.status(400).json('User already exists!');
+    if(secret !== process.env.REGISTER_SECRET) res.status(500).json({success: false, message: "Registration secret is incorrect!"});
+
+    else User.findOne({username}, (err, user) => {
+        if(err) res.status(500).json({success: false, message: err.message});
+        else if(user) res.status(500).json({success: false, message: "User already exists!"});
         else {
             const newUser = new User({username, password, role, groups});
             newUser.save(err => {
-                if(err) res.status(500).json('Errhhhor: ' + err);
-                else res.status(201).json('User created!');
+                if(err) res.status(500).json({success: false, message: err.message});
+                else res.status(201).json({success: true, message: "User registration complete!"});
             })
         }
     });
@@ -55,6 +58,19 @@ router.get('/logout', passport.authenticate('jwt',
 
     res.clearCookie('access_token');
     res.json({user: {username: "", role: "", groups: []}, success: true});
+});
+
+router.get('/authenticated', passport.authenticate('jwt', { session: false }), (req, res) => {
+    
+    res.status(201).json({isAuthenticated: true, user: {username: req.user.username, groups: req.user.groups, role: req.user.role}});
+});
+
+router.get('/uploads', passport.authenticate('jwt', {session: false}), (req, res) => {
+    Upload.find({author: req.user.username}, (err, uploads) => {
+        if(err) res.status(500).json({success: false, message: err.message, uploads: []});
+        else if(!uploads) res.status(201).json({uploads: []});
+        else res.status(201).json({uploads});
+    });
 });
 
 

@@ -10,12 +10,16 @@ const uploadSchema = new Schema({
         trim: true,
         minlength: 1
     },
-    uri: {
+    filename: {
         type: String,
         required: true,
         unique: true,
         trim: true,
         minlength: 1
+    },
+    author: {
+        type: String,
+        required: true
     },
     tags: {
         type: [String],
