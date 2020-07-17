@@ -18,8 +18,8 @@ const signToken = userID => {
 router.route('/register').post((req, res) => {
     const username = req.body.username;
     const password = req.body.password;
+    const email = req.body.email;
     const role = req.body.role;
-    const groups = req.body.groups;
     const secret = req.body.secret;
 
     if(secret !== process.env.REGISTER_SECRET) res.status(500).json({success: false, message: "Registration secret is incorrect!"});
@@ -28,7 +28,7 @@ router.route('/register').post((req, res) => {
         if(err) res.status(500).json({success: false, message: err.message});
         else if(user) res.status(500).json({success: false, message: "User already exists!"});
         else {
-            const newUser = new User({username, password, role, groups});
+            const newUser = new User({username, password, role, email});
             newUser.save(err => {
                 if(err) res.status(500).json({success: false, message: err.message});
                 else res.status(201).json({success: true, message: "User registration complete!"});
@@ -43,11 +43,11 @@ router.route('/login').post(passport.authenticate('local',
     
 
     if(req.isAuthenticated()) {
-        const {_id, username, role, groups} = req.user;
+        const {_id, username, role, tags, email} = req.user;
 
         const token = signToken(_id);
         res.cookie('access_token', token, {httpOnly: true, sameSite: true});
-        res.status(200).json({isAuthenticated: true, user: {username, role, groups}});
+        res.status(200).json({isAuthenticated: true, user: {_id, username, role, tags, email}});
     }
 });
 
@@ -57,20 +57,24 @@ router.get('/logout', passport.authenticate('jwt',
     
 
     res.clearCookie('access_token');
-    res.json({user: {username: "", role: "", groups: []}, success: true});
+    res.json({user: {username: "", role: ""}, success: true});
 });
 
 router.get('/authenticated', passport.authenticate('jwt', { session: false }), (req, res) => {
     
-    res.status(201).json({isAuthenticated: true, user: {username: req.user.username, groups: req.user.groups, role: req.user.role}});
+    const {_id, username, role, tags, email} = req.user;
+
+    res.status(201).json({isAuthenticated: true, user: {_id, username, role, tags, email}});
 });
 
 router.get('/uploads', passport.authenticate('jwt', {session: false}), (req, res) => {
-    Upload.find({author: req.user.username}, (err, uploads) => {
-        if(err) res.status(500).json({success: false, message: err.message, uploads: []});
-        else if(!uploads) res.status(201).json({uploads: []});
-        else res.status(201).json({uploads});
-    });
+    Upload.find({author: req.user._id})
+          .populate('author', 'username role tags')
+          .exec((err, uploads) => {
+            if(err) res.status(500).json({success: false, message: err.message, uploads: []});
+            else if(!uploads) res.status(201).json({uploads: []});
+            else res.status(201).json({uploads});
+         });
 });
 
 

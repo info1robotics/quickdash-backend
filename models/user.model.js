@@ -3,6 +3,11 @@ const bcrypt = require('bcrypt');
 
 const Schema = mongoose.Schema;
 
+var validateEmail = function(email) {
+    var re = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
+    return re.test(email)
+};
+
 const userSchema = new Schema({
     username: {
         type: String,
@@ -11,6 +16,13 @@ const userSchema = new Schema({
         trim: true,
         minlength: 1,
         maxlength: 18,
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true,
+        validate: [validateEmail, 'Invalid mail!'],
+        match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Invalid mail!']
     },
     password: {
         type: String,
@@ -21,16 +33,15 @@ const userSchema = new Schema({
         enum: ['user', 'admin'],
         required: true,
     },
-    groups: {
+    tags: {
         type: [String],
-        enum: ['programming', '3d', 'building', 'pr', 'notebook', 'mentor'],
-        required: true,
-        unique: false
+        required: true
     },
     uploads: [{type: mongoose.Schema.Types.ObjectId, ref: 'Upload', unique: false}]
 }, {
     timestamps: true
 });
+
 
 userSchema.pre('save', function(next) {
     if(!this.isModified('password'))
