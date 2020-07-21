@@ -21,6 +21,10 @@ const uploadSchema = new Schema({
     integrated: {
         type: Boolean,
         required: true
+    },
+    reviews: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: 'Review'
     }
 }, {
     timestamps: true

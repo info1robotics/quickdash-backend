@@ -15,7 +15,7 @@ const port = process.env.PORT || 5002;
 
 app.use(cors());
 app.use(express.json());
-app.use(cookieParser()); /// NU STERGE!!!!!!!!!!!!!!!! (NUUUUUUUUUU) TE ROG!!! (nota catre sine)
+app.use(cookieParser());
 
 
 const atlasUri = process.env.ATLAS_URI;
@@ -27,7 +27,7 @@ const usersRouter = require('./routes/users');
 const uploadsRouter = require('./routes/uploads');
 
 
-app.use('/user', usersRouter);
+app.use('/users', usersRouter);
 app.use('/uploads', uploadsRouter);
 
 

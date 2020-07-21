@@ -15,7 +15,7 @@ const userSchema = new Schema({
         unique: true,
         trim: true,
         minlength: 1,
-        maxlength: 18,
+        maxlength: 100
     },
     email: {
         type: String,
@@ -37,6 +37,10 @@ const userSchema = new Schema({
         type: [String],
         required: true
     },
+    active: {
+        type: Boolean,
+        required: true
+    },
     uploads: [{type: mongoose.Schema.Types.ObjectId, ref: 'Upload', unique: false}]
 }, {
     timestamps: true
@@ -54,6 +58,7 @@ userSchema.pre('save', function(next) {
         next();
     })
 });
+
 
 userSchema.methods.comparePassword = function(password, cb) {
     bcrypt.compare(password, this.password, (err, isMatch) => {

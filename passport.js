@@ -28,6 +28,7 @@ passport.use(new localStrategy((username, password, done) => {
     User.findOne({username}, (err, user) => {
         if(err) return done(err);
         if(!user) return done(null, false);
+        if(!user.active) return done(null, false);
         user.comparePassword(password, done);
     });
 }));
