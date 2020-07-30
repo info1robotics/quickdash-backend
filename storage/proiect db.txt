@@ -1,0 +1,11 @@
+mongodb
+frontend + backend
+rest api
+bucket pt uploads
+vm
+
+Roluri useri:
+- admin
+- user normal
+- grupuri de useri
+- 

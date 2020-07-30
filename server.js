@@ -19,8 +19,9 @@ app.use(cookieParser());
 
 
 const atlasUri = process.env.ATLAS_URI;
-mongoose.connect(atlasUri, { useNewUrlParser: true, useCreateIndex: true }, () => {
-    console.log("Connected successfully to DB!")
+mongoose.connect(atlasUri, { useNewUrlParser: true, useCreateIndex: true }, (err) => {
+    if(err) console.log(err.toString());
+    else console.log("Connected successfully to DB!")
 });
 
 const usersRouter = require('./routes/users');

@@ -62,7 +62,7 @@ router.post('/one', passport.authenticate('jwt', {session: false}), (req, res) =
   });
 });
 
-router.post('/one/updateIntegration', passport.authenticate('jwt', {session: false}), (req, res) => {
+router.post('/one/integration/update', passport.authenticate('jwt', {session: false}), (req, res) => {
   
   if(req.user.role !== "admin") {
     res.status(400).json({success: false, message: "You are not an admin!"});
@@ -79,7 +79,7 @@ router.post('/one/updateIntegration', passport.authenticate('jwt', {session: fal
 
 });
 
-router.delete('/one/delete', passport.authenticate('jwt', {session: false}), (req, res) => {
+router.post('/one/delete', passport.authenticate('jwt', {session: false}), (req, res) => {
   Upload.findById(req.body.upload, (err, upload) => {
     if(err) res.status(500).json({success: false, message: err.toString()});
     else {
@@ -138,15 +138,15 @@ router.post('/one/reviews/', passport.authenticate('jwt', {session: false}), (re
         });
 });
 
-router.post('/one/reviews/userReview', passport.authenticate('jwt', {session: false}), (req, res) => {
-  Review.findOne({author: req.user._id, upload: req.body.upload})
+router.post('/one/reviews/my', passport.authenticate('jwt', {session: false}), (req, res) => {
+  Review.find({author: req.user._id, upload: req.body.upload})
         .populate('author', 'username role tags')
         .populate('upload')
-        .exec((err, review) => {
+        .exec((err, reviews) => {
           if(err) res.status(500).json({success: false, message: err.toString()});
           else {
-            if(!review) res.status(201).json({success: true, message: ""});
-            else res.status(201).json({success: true, message: "", review});
+            if(!reviews) res.status(201).json({success: true, message: ""});
+            else res.status(201).json({success: true, message: "", reviews});
           }
         });
 });
@@ -159,7 +159,22 @@ router.post('/one/reviews/add', passport.authenticate('jwt', {session: false}), 
 
   const constructedReview = {author, upload, comment, positive};
 
-  Review.findOneAndUpdate({author: req.user._id}, constructedReview, (err, review) => {
+  const newReview = new Review(constructedReview);
+  
+  newReview.save((err, review) => {
+    if(err) res.status(500).json({success: false, message: err.toString()});
+    else {
+      Upload.findById(upload, (err, foundUpload) => {
+      foundUpload.reviews.push(review._id);
+      foundUpload.save((err) => {
+          if(err) res.status(500).json({success: false, message: err.toString()});
+          else res.status(201).json({success: true, message: "Created review!"});
+        })
+      });
+    }
+  });
+
+  /*Review.findOneAndUpdate({author: req.user._id}, constructedReview, (err, review) => {
     if(err) res.status(500).json({success: false, message: err.toString(), review});
     else {
       if(review) res.status(201).json({success: true, message: "Review created/updated succesfuly!", review});
@@ -181,9 +196,7 @@ router.post('/one/reviews/add', passport.authenticate('jwt', {session: false}), 
         });
       }
     }
-  });
-
-  
+  });*/
 
 });
 
@@ -192,6 +205,20 @@ router.get('/download/:name', passport.authenticate('jwt', {session: false} ), (
 
     const name = req.params.name;
     res.download(`./storage/${name}`);
+});
+
+router.get('/my', passport.authenticate('jwt', {session: false}), (req, res) => {
+  Upload.find({author: req.user._id})
+        .populate('author', '_id username role tags')
+        .populate({
+          path: "reviews",
+          model: "Review"
+        })
+        .exec((err, uploads) => {
+          if(err) res.status(500).json({success: false, message: err.message, uploads: []});
+          else if(!uploads) res.status(201).json({uploads: []});
+          else res.status(201).json({uploads});
+       });
 });
 
 module.exports = router;

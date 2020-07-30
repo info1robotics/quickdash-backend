@@ -53,7 +53,8 @@ router.post('/invite', passport.authenticate("jwt", { session: false }), (req, r
             newUser.save(err => {
                 if(err) res.status(500).json({success: false, message: err.toString()});
                 else res.status(201).json({success: true, message: "User invitation successful!"});
-            })
+            });
+            
         } else res.status(500).json({success: false, message: "Please provide an email address!"});
     } 
 });
@@ -93,7 +94,7 @@ router.route('/login').post(passport.authenticate('local',
         const token = signToken(_id);
         res.cookie('access_token', token, {httpOnly: true, sameSite: true});
         res.status(200).json({isAuthenticated: true, user: {_id, username, role, tags, email}});
-    }
+    } else res.status(400).json({isAuthenticated: false});
 });
 
 router.get('/all', passport.authenticate('jwt', {session: false}), (req, res) => {
@@ -120,21 +121,7 @@ router.get('/authenticated', passport.authenticate('jwt', { session: false }), (
     res.status(201).json({isAuthenticated: true, user: {_id, username, role, tags, email}});
 });
 
-router.get('/uploads', passport.authenticate('jwt', {session: false}), (req, res) => {
-    Upload.find({author: req.user._id})
-          .populate('author', '_id username role tags')
-          .populate({
-            path: "reviews",
-            model: "Review"
-          })
-          .exec((err, uploads) => {
-            if(err) res.status(500).json({success: false, message: err.message, uploads: []});
-            else if(!uploads) res.status(201).json({uploads: []});
-            else res.status(201).json({uploads});
-         });
-});
-
-router.put('/multiple', passport.authenticate('jwt', {session: false}), (req, res) => {
+router.post('/multiple/update', passport.authenticate('jwt', {session: false}), (req, res) => {
     if(req.user.role !== "admin") res.status(400).json({success: false, message: "You are not an admin!"});
     else {
 

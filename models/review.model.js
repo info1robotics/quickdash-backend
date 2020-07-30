@@ -7,7 +7,7 @@ const reviewSchema = new Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true,
-        unique: true    
+        unique: false    
     },
     upload: {
         type: mongoose.Schema.Types.ObjectId,
