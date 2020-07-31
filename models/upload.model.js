@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const { schema } = require('./review.model');
 const userSchema = require('./user.model').userSchema;
 const Schema = mongoose.Schema;
 
@@ -23,13 +22,28 @@ const uploadSchema = new Schema({
         required: true
     },
     reviews: [{
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: 'Review'
+        type: new mongoose.Schema(
+            {
+                author: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'User',
+                    required: true,
+                    unique: false    
+                },
+                comment: {
+                    type: String,
+                    required: true
+                },
+                positive: {
+                    type: Boolean,
+                    required: true
+                }
+            }, { timestamps: true }
+        )
+        
+        
     }]
-}, {
-    timestamps: true
-});
+}, { timestamps: true });
 
-schema.index({name: 1});
 
 module.exports =  mongoose.model('Upload', uploadSchema);

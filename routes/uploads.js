@@ -9,7 +9,6 @@ const passport = require('passport');
 const passportConfig = require('../passport');
 
 let Upload = require("../models/upload.model");
-let Review = require('../models/review.model');
 
 router.route("/").get((req, res) => {
     Upload.find()
@@ -38,7 +37,7 @@ router.route('/add').post(passport.authenticate('jwt', { session: false } ), upl
         name: req.file.originalname,
         author: req.user._id,
         tags: req.body.tags.split(','),
-        reviewedUsers: [],
+        reviews: [],
         integrated: req.body.integrated
     };
     
@@ -52,10 +51,7 @@ router.route('/add').post(passport.authenticate('jwt', { session: false } ), upl
 router.post('/one', passport.authenticate('jwt', {session: false}), (req, res) => {
   Upload.findOne({ _id: req.body.upload})
         .populate("author", "_id username role tags")
-        .populate({
-          path: "reviews",
-          model: "Review"
-        })
+        .populate("reviews.author")
         .exec((err, upload) => {
     if(err) res.status(400).json({success: false, message: err.toString()});
     else res.status(200).json({success: true, message: "", upload});
@@ -90,21 +86,7 @@ router.post('/one/delete', passport.authenticate('jwt', {session: false}), (req,
       if(reqUser.toString() === uploadUser.toString()) {
         Upload.findOneAndDelete({ _id: req.body.upload}, (err, upload) => {
           if(err) res.status(500).json({success: false, message: err.toString()});
-          else  {
-            Review.deleteMany({upload: req.body.upload}, (err) => {
-              if(err) res.status(500).json({success: false, message: err.toString()});
-              else {
-                fs.unlink(`./storage/${upload.name}`, (err) => {
-                  if (err) {
-                    console.error(err);
-                    res.status(500).json({success: false, message: err.toString()});
-                  } else res.status(200).json({success: true, message: "Upload deletion successful!"});
-                });
-                
-              }
-            });
-            
-          }
+          else res.status(200).json({success: true, message: "Upload deletion successful!"});
         });
       } else {
         res.status(400).json({success: false, message: "You are not the owner of this upload!"});
@@ -118,36 +100,10 @@ router.post('/one/delete', passport.authenticate('jwt', {session: false}), (req,
 router.get('/all', passport.authenticate('jwt', {session: false}), (req, res) => {
   Upload.find({})
         .populate('author', '_id username role tags')
-        .populate({
-          path: "reviews",
-          model: "Review"
-        })
+        .populate("reviews.author")
         .exec((err, uploads) => {
           if(err) res.status(500).json({success: false, message: err.toString()});
           else res.status(200).json({success: true, message: "", uploads});
-        });
-});
-
-router.post('/one/reviews/', passport.authenticate('jwt', {session: false}), (req, res) => {
-  Review.find({upload: req.body.upload})
-        .populate('upload')
-        .populate('author', 'username role tags')
-        .exec((err, reviews) => {
-          if(err) res.status(500).json({success: false, message: err.toString(), reviews: []});
-          else res.status(200).json({success: true, message: "", reviews});
-        });
-});
-
-router.post('/one/reviews/my', passport.authenticate('jwt', {session: false}), (req, res) => {
-  Review.find({author: req.user._id, upload: req.body.upload})
-        .populate('author', 'username role tags')
-        .populate('upload')
-        .exec((err, reviews) => {
-          if(err) res.status(500).json({success: false, message: err.toString()});
-          else {
-            if(!reviews) res.status(201).json({success: true, message: ""});
-            else res.status(201).json({success: true, message: "", reviews});
-          }
         });
 });
 
@@ -159,61 +115,52 @@ router.post('/one/reviews/add', passport.authenticate('jwt', {session: false}), 
 
   const constructedReview = {author, upload, comment, positive};
 
-  const newReview = new Review(constructedReview);
-  
-  newReview.save((err, review) => {
-    if(err) res.status(500).json({success: false, message: err.toString()});
-    else {
-      Upload.findById(upload, (err, foundUpload) => {
-      foundUpload.reviews.push(review._id);
-      foundUpload.save((err) => {
-          if(err) res.status(500).json({success: false, message: err.toString()});
-          else res.status(201).json({success: true, message: "Created review!"});
-        })
-      });
-    }
+  Upload.findById(upload, (err, upload) => {
+    upload.reviews.push(constructedReview);
+
+    upload.save((err) => {
+      if(err) res.status(500).json({success: false, message: err.toString()});
+      else res.status(201).json({success: true, message: "Created review!"});
+    });
+
   });
 
-  /*Review.findOneAndUpdate({author: req.user._id}, constructedReview, (err, review) => {
-    if(err) res.status(500).json({success: false, message: err.toString(), review});
-    else {
-      if(review) res.status(201).json({success: true, message: "Review created/updated succesfuly!", review});
+});
+
+router.post('/one/reviews/one/delete', passport.authenticate('jwt', { session: false }), (req, res) => {
+    const { uploadID, reviewID } = req.body;
+
+    Upload.findById(uploadID, (err, upload) => {
+      if(err) res.status(500).json({success: false, message: err.toString()});
       else {
-        const newReview = new Review(constructedReview);
+        const review = upload.reviews.id(reviewID);
 
-        newReview.save((err, review) => {
-          if(err) res.status(500).json({success: false, message: err.toString()});
-          else {
-            Upload.findById(upload, (err, foundUpload) => {
-              foundUpload.reviews.push(review._id);
-              foundUpload.save((err) => {
-                if(err) res.status(500).json({success: false, message: err.toString()});
-                else res.status(201).json({success: true, message: "Created review!"});
-              })
-              
-            });
-          }
-        });
+        if(review.author.toString() !== req.user._id.toString()) {
+          res.status(400).json({success: false, message: "You're not the author of this review!"});
+        } else {
+          upload.reviews.pull(reviewID);
+          upload.save(err => {
+            if(err) res.status(500).json({success: false, message: err.toString()});
+            res.status(201).json({success: true, message: "Review deleted succesfully!"});
+          });
+        }
+        
       }
-    }
-  });*/
-
+    });
 });
 
 
 router.get('/download/:name', passport.authenticate('jwt', {session: false} ), (req, res) => {
 
-    const name = req.params.name;
-    res.download(`./storage/${name}`);
+  const name = req.params.name;
+  res.download(`./storage/${name}`);
 });
+
 
 router.get('/my', passport.authenticate('jwt', {session: false}), (req, res) => {
   Upload.find({author: req.user._id})
         .populate('author', '_id username role tags')
-        .populate({
-          path: "reviews",
-          model: "Review"
-        })
+        .populate("reviews.author")
         .exec((err, uploads) => {
           if(err) res.status(500).json({success: false, message: err.message, uploads: []});
           else if(!uploads) res.status(201).json({uploads: []});
