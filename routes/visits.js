@@ -24,7 +24,7 @@ router.get('/export/all', passport.authenticate('jwt', {session: false}), (req, 
             const visitsSimple = visits.map(visit => visit.toObject());
 
             const visitsJSON = visitsSimple.map(visit => ({
-                Utilizator: visit.user.username + (visit.guests? ` (cu ${visit.guests})` : ""),
+                Utilizator: visit.user.fullname + (visit.guests? ` (cu ${visit.guests})` : ""),
                 "Data Inceput": dateformat(visit.startDate, "d.m.yyyy, H:M:s"),
                 "Data Final": dateformat(visit.endDate, "d.m.yyyy, H:M:s")
             }));
