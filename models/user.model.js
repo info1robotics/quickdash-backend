@@ -24,6 +24,14 @@ const userSchema = new Schema({
         validate: [validateEmail, 'Invalid mail!'],
         match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Invalid mail!']
     },
+    fullname: {
+        type: String,
+        required: true,
+        trim: true,
+        default: "USER NOT ACTIVE YET",
+        minlength: 1,
+        maxlength: 100
+    },
     password: {
         type: String,
         required: true

@@ -13,6 +13,10 @@ const visitSchema = new Schema({
     },
     endDate: {
         type: Date
+    },
+    guests: {
+        type: String,
+        default: ""
     }
 });
 

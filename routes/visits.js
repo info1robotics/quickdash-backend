@@ -24,7 +24,7 @@ router.get('/export/all', passport.authenticate('jwt', {session: false}), (req, 
             const visitsSimple = visits.map(visit => visit.toObject());
 
             const visitsJSON = visitsSimple.map(visit => ({
-                Utilizator: visit.user.username,
+                Utilizator: visit.user.username + (visit.guests? ` (cu ${visit.guests})` : ""),
                 "Data Inceput": dateformat(visit.startDate, "d.m.yyyy, H:M:s"),
                 "Data Final": dateformat(visit.endDate, "d.m.yyyy, H:M:s")
             }));
@@ -63,7 +63,8 @@ router.post('/checkin', passport.authenticate('jwt', {session: false}), (req, re
 
             if(user.visitID) res.status(500).json({success: false, message: "You are already checked in!"});
             else {
-                const newVisit = new Visit({user: user._id, startDate: new Date()});
+                const guests = req.body.guests? req.body.guests : "";
+                const newVisit = new Visit({user: user._id, startDate: new Date(), guests});
                 newVisit.save((err, visit) => {
                     if(err) res.status(500).json({success: false, message: err.toString()});
                     else {

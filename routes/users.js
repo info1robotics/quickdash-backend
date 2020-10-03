@@ -61,7 +61,7 @@ router.post('/invite', passport.authenticate("jwt", { session: false }), (req, r
 
 router.post('/activate', (req, res) => {
 
-    const { username, email, password } = req.body.user;
+    const { username, email, fullname, password } = req.body.user;
 
     if(username) {
         User.findOne({ email, active: false }, (err, user) => {
@@ -70,6 +70,7 @@ router.post('/activate', (req, res) => {
             else {
                 user.username = username;
                 user.password = password;
+                user.fullname = fullname;
                 user.active = true;
                 
                 user.save((err, user) => {
