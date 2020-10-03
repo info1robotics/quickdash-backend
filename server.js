@@ -26,10 +26,11 @@ mongoose.connect(atlasUri, { useNewUrlParser: true, useCreateIndex: true }, (err
 
 const usersRouter = require('./routes/users');
 const uploadsRouter = require('./routes/uploads');
-
+const visitsRouter = require('./routes/visits');
 
 app.use('/users', usersRouter);
 app.use('/uploads', uploadsRouter);
+app.use('/visits', visitsRouter);
 
 
 app.listen(port, () => {

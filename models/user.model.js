@@ -41,7 +41,8 @@ const userSchema = new Schema({
         type: Boolean,
         required: true
     },
-    uploads: [{type: mongoose.Schema.Types.ObjectId, ref: 'Upload', unique: false}]
+    uploads: [{type: mongoose.Schema.Types.ObjectId, ref: 'Upload', unique: false}],
+    visitID: {type: mongoose.Schema.Types.ObjectId, ref: 'Visit'}
 }, {
     timestamps: true
 });
