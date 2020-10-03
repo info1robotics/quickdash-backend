@@ -86,7 +86,14 @@ router.post('/one/delete', passport.authenticate('jwt', {session: false}), (req,
       if(reqUser.toString() === uploadUser.toString()) {
         Upload.findOneAndDelete({ _id: req.body.upload}, (err, upload) => {
           if(err) res.status(500).json({success: false, message: err.toString()});
-          else res.status(200).json({success: true, message: "Upload deletion successful!"});
+          else {
+            fs.unlink(`./storage/${upload.name}`, (err) => {
+              if (err) {
+                console.error(err);
+                res.status(400).json({success: false, message: err.toString()});
+              } else res.status(200).json({success: true, message: "Upload deletion successful!"});
+            });
+          }
         });
       } else {
         res.status(400).json({success: false, message: "You are not the owner of this upload!"});
