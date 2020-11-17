@@ -12,6 +12,7 @@ PORT=5002
 ATLAS_URI=adresa serverului mongodb
 SECRET_KEY=testtest123
 ```
-4. Ruleaza ```node server.js``` din root-ul directorului.
+4. Ruleaza ```node addadmin.js username parola``` pentru a crea un cont de admin.
+5. Ruleaza ```node server.js``` din root-ul directorului.
 
 *** NU FOLOSITI DOCKER ***
