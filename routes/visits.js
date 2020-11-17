@@ -18,15 +18,15 @@ router.get('/all', passport.authenticate('jwt', {session: false}), (req, res) =>
 });
 
 router.get('/export/all', passport.authenticate('jwt', {session: false}), (req, res) => {
-    Visit.find({}).populate('user', 'username').exec((err, visits) => {
+    Visit.find({}).populate('user', 'username fullname').exec((err, visits) => {
         if(err) res.status(500).json({success: false, message: err.toString()});
         else {
             const visitsSimple = visits.map(visit => visit.toObject());
 
             const visitsJSON = visitsSimple.map(visit => ({
-                Utilizator: visit.user.username + (visit.guests? ` (cu ${visit.guests})` : ""),
-                "Data Inceput": dateformat(visit.startDate, "d.m.yyyy, H:M:s"),
-                "Data Final": dateformat(visit.endDate, "d.m.yyyy, H:M:s")
+                Utilizator: visit.user.fullname + (visit.guests? ` (cu ${visit.guests})` : ""),
+                "Data Inceput": dateformat(visit.startDate, "d.m.yyyy, H:MM:ss"),
+                "Data Final": dateformat(visit.endDate, "d.m.yyyy, H:MM:ss")
             }));
 
             let workbook = xlsx.utils.book_new();
