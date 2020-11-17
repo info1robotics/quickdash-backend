@@ -13,3 +13,5 @@ ATLAS_URI=adresa serverului mongodb
 SECRET_KEY=testtest123
 ```
 4. Ruleaza ```node server.js``` din root-ul directorului.
+
+*** NU FOLOSITI DOCKER ***
