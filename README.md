@@ -6,7 +6,6 @@
 1. Descarca ramura ```main```.
 2. Creeaza un folder ```storage``` in root-ul directorului.
 3. Creeaza fisierul ```.env``` in root-ul directorului si completeaza parametrii.
-Exemplu:
 ```
 PORT=5002
 ATLAS_URI=adresa serverului mongodb
